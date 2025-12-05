@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- 
+    ADD247 Faculty Feedback Form - Client-Side UI
+    
+    This HTML file provides the user interface for collecting faculty feedback.
+    Features:
+    - Dynamic dropdowns for branch, course, and batch selection
+    - Responsive emoji-based rating system (1-5 scale)
+    - Dark/Light theme toggle
+    - Beautiful glassmorphic card design
+    - Form validation before submission
+    
+    @author ADD247 Development Team
+    @version 1.0.0
+  -->
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ADD247 Faculty Feedback Form</title>
+
+  <!-- ========================================================================
+       GOOGLE FONTS - Poppins font family for modern UI
+       ======================================================================== -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ====================================================================
+       CSS VARIABLES - Dark/Light theme configuration
+       ==================================================================== */
+    :root {
+      --bg1: #6a11cb;           /* Primary gradient color (dark) */
+      --bg2: #2575fc;           /* Secondary gradient color (dark) */
+      --text: #fff;             /* Text color (dark mode) */
+      --card-bg: rgba(255, 255, 255, 0.20);  /* Card background (dark) */
+    }
+
+    /* Light theme override */
+    body.light {
+      --bg1: #e3f2fd;           /* Light blue background */
+      --bg2: #bbdefb;           /* Lighter blue gradient */
+      --text: #000;             /* Dark text for contrast */
+      --card-bg: rgba(255, 255, 255, 0.65);  /* Opaque white cards */
+    }
+
+    /* ====================================================================
+       BODY STYLES - Main page background and layout
+       ==================================================================== */
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, var(--bg1), var(--bg2));
+      font-family: "Poppins", sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      padding: 22px;
+      transition: .5s;  /* Smooth theme transition */
+    }
+
+    /* ====================================================================
+       CARD STYLES - Glassmorphic design for main form
+       ==================================================================== */
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(15px);  /* Glassmorphism effect */
+      padding: 25px;
+      border-radius: 22px;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.25);
+      animation: fade .7s ease;
+      max-width: 550px;
+      margin: auto;
+    }
+
+    /* Fade-in animation on page load */
+    @keyframes fade {
+      from { opacity:0; transform:scale(0.97); }
+      to { opacity:1; transform:scale(1); }
+    }
+
+    /* ====================================================================
+       FORM ELEMENTS - Headings and labels
+       ==================================================================== */
+    h2 {
+      text-align: center;
+      margin-bottom: 18px;
+      font-weight: 600;
+    }
+
+    label {
+      font-weight: 600;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    /* ====================================================================
+       INPUT & SELECT STYLES - Form input fields
+       ==================================================================== */
+    select, input {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      outline: none;
+      font-size: 16px;
+      background: rgba(255,255,255,0.35);
+      color: var(--text);
+      margin-bottom: 20px;
+      box-sizing: border-box;
+    }
+
+    /* Options text color for visibility */
+    option {
+      color: black;
+    }
+
+    /* ====================================================================
+       EMOJI RATING SYSTEM - Interactive 5-point rating scale
+       ==================================================================== */
+    .emoji-row {
+      display: flex;
+      gap: 18px;
+      justify-content: center;
+      font-size: 32px;
+      margin-top: 10px;
+      margin-bottom: 20px;
+    }
+
+    /* Individual emoji styling */
+    .emoji {
+      cursor: pointer;
+      transition: transform 0.25s ease, filter 0.25s ease;
+      filter: grayscale(80%);  /* Desaturate unselected emojis */
+      user-select: none;
+    }
+
+    /* Hover effect - scale and rotate emoji */
+    .emoji:hover {
+      transform: scale(1.25) rotate(6deg);
+    }
+
+    /* Selected emoji styling - vibrant and enlarged */
+    .emoji.selected {
+      filter: grayscale(0%);    /* Full color */
+      transform: scale(1.5);
+      text-shadow: 0 6px 18px rgba(255, 152, 0, 0.45);  /* Glow effect */
+    }
+
+    /* ====================================================================
+       FACULTY BLOCK STYLES - Container for each faculty's ratings
+       ==================================================================== */
+    .faculty-block {
+      margin-bottom: 25px;
+      padding: 15px;
+      background: rgba(255,255,255,0.25);
+      border-radius: 14px;
+      border-left: 6px solid #ffeb3b;  /* Yellow accent */
+    }
+
+    /* ====================================================================
+       BUTTON STYLES - Submit button and interactions
+       ==================================================================== */
+    .btn {
+      width: 100%;
+      padding: 15px;
+      background: #ffeb3b;
+      border: none;
+      color: black;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .btn:hover {
+      background: #ffe033;  /* Slightly darker yellow on hover */
+    }
+
+    /* ====================================================================
+       LOADER STYLES - Spinning loader animation during submission
+       ==================================================================== */
+    .loader {
+      width: 60px;
+      height: 60px;
+      border: 6px solid #fff;
+      border-top: 6px solid #ffeb3b;  /* Yellow spinner */
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+      display: none;  /* Hidden by default */
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* ====================================================================
+       THANK YOU SCREEN STYLES - Success message after submission
+       ==================================================================== */
+    #thankyou {
+      display: none;  /* Hidden until form submitted */
+      text-align: center;
+      padding: 25px;
+    }
+
+    .tick {
+      font-size: 90px;
+      color: #ffeb3b;
+      animation: pop .6s ease;
+      margin-bottom: 15px;
+    }
+
+    /* Pop-in animation for success tick */
+    @keyframes pop {
+      from { transform: scale(0); }
+      to { transform: scale(1); }
+    }
+
+    /* ====================================================================
+       THEME TOGGLE BUTTON - Dark/Light mode switcher
+       ==================================================================== */
+    .toggle-btn {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      padding: 10px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.6);
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      transition: background 0.3s ease;
+    }
+
+    .toggle-btn:hover {
+      background: rgba(255,255,255,0.8);
+    }
+
+    /* ====================================================================
+       TEXTAREA STYLES - Complaint/Suggestion input field
+       ==================================================================== */
+    textarea {
+      font-family: "Poppins", sans-serif;  /* Consistent font */
+      resize: vertical;  /* Allow only vertical resizing */
+    }
+    /* ====================================================================
+       LOGO STYLES - Top-of-form logo
+       ==================================================================== */
+    #site-logo {
+      display: block;
+      max-width: 220px;
+      width: 45%;
+      height: auto;
+      margin: 6px auto 18px auto;
+      border-radius: 8px;
+      box-shadow: 0 6px 18px rgba(153, 152, 152, 0.18);
+      background: rgba(255,255,255,0.06);
+      padding: 6px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Theme toggle button (Moon icon for light mode) -->
+  <button class="toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
+
+  <!-- ====================================================================
+       MAIN FORM CONTAINER - Feedback form with all inputs
+       ==================================================================== -->
+  <div class="card" id="mainForm">
+
+    <img id="site-logo" src="assets/adda247-logo.png" alt="ADD247 Logo">
+    <h2>ADD247 Faculty Feedback Form</h2>
+
+    <!-- Branch Selection Dropdown -->
+    <label for="branch">Branch Name</label>
+    <select id="branch" required>
+      <option value="">Select Branch</option>
+    </select>
+
+    <!-- Student Name Input -->
+    <label for="student">Student Name</label>
+    <input type="text" id="student" placeholder="Enter your name" required>
+
+    <!-- Registration Number Input -->
+    <label for="regno">Registration Number</label>
+    <input type="text" id="regno" placeholder="Enter registration no." required>
+
+    <!-- Course Selection Dropdown -->
+    <label for="course">Course</label>
+    <select id="course" required>
+      <option value="">Select Course</option>
+      <option>Bank</option>
+      <option>Bank Foundation</option>
+      <option>SSC</option>
+      <option>SSC Foundation</option>
+    </select>
+
+    <!-- Batch Code Selection Dropdown -->
+    <label for="batch">Batch Code</label>
+    <select id="batch" required>
+      <option>Select Branch & Course first</option>
+    </select>
+
+    <!-- Faculty Rating Area - Dynamically populated -->
+    <div id="facultyArea"></div>
+
+    <!-- Complaint/Suggestion Textarea -->
+    <label for="complaint">Complaint / Suggestion</label>
+    <textarea id="complaint" placeholder="Write here..." required
+      style="width:100%; padding:14px; border-radius:12px; border:none;
+      background:rgba(255,255,255,0.35); font-size:16px; color:var(--text);
+      height:120px; margin-bottom:20px; box-sizing: border-box;"></textarea>
+
+    <!-- Submit Button -->
+    <button class="btn" onclick="submitForm()">Submit</button>
+
+    <!-- Loader (shown during form submission) -->
+    <div class="loader" id="loader"></div>
+
+  </div>
+
+  <!-- ====================================================================
+       SUCCESS SCREEN - Shown after successful form submission
+       ==================================================================== -->
+  <div id="thankyou">
+    <div class="tick">✔</div>
+    <h2>Thank you for your feedback!</h2>
+    <p>Your response has been recorded successfully.</p>
+  </div>
+
+  <!-- ====================================================================
+       CLIENT-SIDE JAVASCRIPT - Form logic and interactions
+       ==================================================================== -->
+  <script>
+    /**
+     * THEME TOGGLE FUNCTION
+     * Switches between dark and light mode by toggling CSS class
+     */
+    function toggleTheme() {
+      document.body.classList.toggle("light");
+    }
+
+    // ======================================================================
+    // INITIALIZATION - Load branch list on page load
+    // ======================================================================
+
+    /**
+     * Fetch branch list from server on page load
+     * Uses Google Apps Script RPC (Remote Procedure Call)
+     * If `google.script.run` is not available (e.g. local preview), show a friendly message
+     */
+    if (typeof google === 'undefined' || !google.script || !google.script.run) {
+      console.warn('google.script.run is not available. Branch list will not load in this environment.');
+      // Keep the select prompt as a hint for the user
+    } else {
+      google.script.run.withSuccessHandler(loadBranch).getBranchList();
+    }
+
+    // Fallback: after 3 seconds, if branches haven't been populated, show a helpful placeholder
+    setTimeout(() => {
+      const br = document.getElementById('branch');
+      if (!br) return;
+      // If still only one option and it's the empty-value prompt, indicate loading failed
+      if (br.options.length === 1 && br.options[0].value === '') {
+        br.options[0].text = 'No branches loaded (check connection)';
+        console.warn('Branch list not loaded within 3s. Check server or network.');
+      }
+    }, 3000);
+
+    /**
+     * Populates the Branch dropdown with fetched branch names
+     * @param {Array<string>} list - List of branch names from server
+     */
+    function loadBranch(list) {
+      const br = document.getElementById("branch");
+      br.innerHTML = `<option value="">Select Branch</option>`;
+      list.forEach(x => br.innerHTML += `<option>${x}</option>`);
+    }
+
+    // ======================================================================
+    // EVENT LISTENERS - Dropdown change handlers
+    // ======================================================================
+
+    /** Load batch codes when branch or course is changed */
+    document.getElementById("branch").onchange = loadBatchCodes;
+    document.getElementById("course").onchange = loadBatchCodes;
+
+    /**
+     * Fetches batch codes based on selected branch and course
+     * Triggered by branch or course selection change
+     */
+    function loadBatchCodes() {
+      const branch = document.getElementById("branch").value;
+      const course = document.getElementById("course").value;
+      
+      // Require both branch and course to be selected
+      if (!branch || !course) return;
+
+      google.script.run.withSuccessHandler(list => {
+        const batch = document.getElementById("batch");
+        batch.innerHTML = `<option value="">Select Batch</option>`;
+        list.forEach(x => batch.innerHTML += `<option>${x}</option>`);
+      }).getBatchCodes(branch, course);
+    }
+
+    /** Load faculty list when batch is changed */
+    document.getElementById("batch").onchange = () => {
+      const branch = document.getElementById("branch").value;
+      const batch = document.getElementById("batch").value;
+      
+      // Require both branch and batch to be selected
+      if (!branch || !batch) return;
+
+      google.script.run.withSuccessHandler(buildFacultyUI).getFacultyListForBatch(branch, batch);
+    };
+
+    // ======================================================================
+    // FACULTY UI BUILDER - Dynamically creates rating sections
+    // ======================================================================
+
+    /**
+     * Builds the faculty rating UI with emoji-based 5-point scales
+     * Creates one section per faculty member teaching the batch
+     * 
+     * @param {Array<{faculty: string, subject: string}>} list - Faculty-subject pairs
+     */
+    function buildFacultyUI(list) {
+      const area = document.getElementById("facultyArea");
+      area.innerHTML = "";
+
+      // Handle case where no faculty found
+      if (!list || list.length === 0) {
+        area.innerHTML = '<p style="text-align:center; color: rgba(255,255,255,0.9)">No faculty found for selected batch.</p>';
+        return;
+      }
+
+      // Create a rating section for each faculty member
+      list.forEach((obj, i) => {
+        const block = document.createElement("div");
+        block.className = "faculty-block";
+
+        block.innerHTML = `
+          <strong>${escapeHtml(obj.faculty)}</strong><br>
+          <small>${escapeHtml(obj.subject)}</small>
+
+          <!-- Subject Knowledge Rating (1-5 scale) -->
+          <label>Subject Knowledge</label>
+          <div class="emoji-row" id="sk-${i}" data-rating="0">
+            <span class="emoji" onclick="selectEmoji('sk-${i}',1)" title="Poor">😡</span>
+            <span class="emoji" onclick="selectEmoji('sk-${i}',2)" title="Below Average">😕</span>
+            <span class="emoji" onclick="selectEmoji('sk-${i}',3)" title="Average">😐</span>
+            <span class="emoji" onclick="selectEmoji('sk-${i}',4)" title="Good">🙂</span>
+            <span class="emoji" onclick="selectEmoji('sk-${i}',5)" title="Excellent">😍</span>
+          </div>
+
+          <!-- Lecture Delivery Rating (1-5 scale) -->
+          <label>Lecture Delivery</label>
+          <div class="emoji-row" id="ld-${i}" data-rating="0">
+            <span class="emoji" onclick="selectEmoji('ld-${i}',1)" title="Poor">😡</span>
+            <span class="emoji" onclick="selectEmoji('ld-${i}',2)" title="Below Average">😕</span>
+            <span class="emoji" onclick="selectEmoji('ld-${i}',3)" title="Average">😐</span>
+            <span class="emoji" onclick="selectEmoji('ld-${i}',4)" title="Good">🙂</span>
+            <span class="emoji" onclick="selectEmoji('ld-${i}',5)" title="Excellent">😍</span>
+          </div>
+
+          <!-- Student Engagement Rating (1-5 scale) -->
+          <label>Student Engagement</label>
+          <div class="emoji-row" id="se-${i}" data-rating="0">
+            <span class="emoji" onclick="selectEmoji('se-${i}',1)" title="Poor">😡</span>
+            <span class="emoji" onclick="selectEmoji('se-${i}',2)" title="Below Average">😕</span>
+            <span class="emoji" onclick="selectEmoji('se-${i}',3)" title="Average">😐</span>
+            <span class="emoji" onclick="selectEmoji('se-${i}',4)" title="Good">🙂</span>
+            <span class="emoji" onclick="selectEmoji('se-${i}',5)" title="Excellent">😍</span>
+          </div>
+        `;
+
+        area.appendChild(block);
+      });
+    }
+
+    // ======================================================================
+    // EMOJI RATING HANDLER
+    // ======================================================================
+
+    /**
+     * Utility function to escape HTML special characters
+     * Prevents XSS attacks by sanitizing user-provided data
+     * 
+     * @param {string} text - Text to escape
+     * @returns {string} Escaped text safe for HTML insertion
+     */
+    function escapeHtml(text) {
+      if (!text && text !== 0) return "";
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    /**
+     * Handles emoji selection for rating scales
+     * Updates visual state and stores rating value
+     * 
+     * @param {string} containerId - ID of the emoji-row container
+     * @param {number} value - Selected rating (1-5)
+     */
+    function selectEmoji(containerId, value) {
+      const row = document.getElementById(containerId);
+      if (!row) return;
+
+      const emojis = row.querySelectorAll(".emoji");
+      
+      // Mark first 'value' emojis as selected
+      emojis.forEach((e, idx) => {
+        if (idx < value) e.classList.add("selected");
+        else e.classList.remove("selected");
+      });
+
+      // Store the rating value in the data attribute
+      row.dataset.rating = value;
+    }
+
+    // ======================================================================
+    // FORM SUBMISSION
+    // ======================================================================
+
+    /**
+     * Validates form and submits feedback data to server
+     * 1. Validates all required fields are filled
+     * 2. Collects ratings from all faculty sections
+     * 3. Sends data to server via google.script.run
+     * 4. Shows success screen on completion
+     */
+    function submitForm() {
+      // Get form field values
+      const branch = document.getElementById("branch").value;
+      const student = document.getElementById("student").value.trim();
+      const regno = document.getElementById("regno").value.trim();
+      const course = document.getElementById("course").value;
+      const batch = document.getElementById("batch").value;
+      const complaint = document.getElementById("complaint").value.trim();
+
+      // Validate required fields
+      if (!branch || !student || !regno || !course || !batch || !complaint) {
+        alert("Please fill all required fields.");
+        return;
+      }
+
+      // Collect faculty feedback data
+      const facultyBlocks = document.querySelectorAll(".faculty-block");
+      const payload = [];
+
+      facultyBlocks.forEach((blk, idx) => {
+        // Extract faculty and subject from block
+        const faculty = blk.querySelector("strong").innerText;
+        const subject = blk.querySelector("small").innerText;
+
+        // Extract rating values from emoji containers
+        const sk = Number((document.getElementById(`sk-${idx}`) || {}).dataset?.rating || 0);
+        const ld = Number((document.getElementById(`ld-${idx}`) || {}).dataset?.rating || 0);
+        const se = Number((document.getElementById(`se-${idx}`) || {}).dataset?.rating || 0);
+
+        // Add feedback entry to payload
+        payload.push({
+          branch: branch,
+          student: student,
+          regno: regno,
+          course: course,
+          batch: batch,
+          faculty: faculty,
+          subject: subject,
+          sk: sk,               // Subject Knowledge rating
+          ld: ld,               // Lecture Delivery rating
+          se: se,               // Student Engagement rating
+          complaint: complaint
+        });
+      });
+
+      // Show loader during submission
+      document.getElementById("loader").style.display = "block";
+
+      // Send data to server and show success screen
+      google.script.run.withSuccessHandler(() => {
+        document.getElementById("mainForm").style.display = "none";
+        document.getElementById("thankyou").style.display = "block";
+      }).saveFeedback(payload);
+    }
+  </script>
+
+</body>
+</html>
